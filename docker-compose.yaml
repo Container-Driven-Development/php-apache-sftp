@@ -1,0 +1,48 @@
+services:
+
+  generate-ssh-keys:
+    image: php-apache-sftp
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: /prepare-test.sh
+    volumes:
+      - ./test/prepare-test.sh:/prepare-test.sh
+      - ssh:/var/www/.ssh
+
+  php-apache-sftp:
+    image: php-apache-sftp
+    depends_on:
+      generate-ssh-keys:
+        condition: service_completed_successfully
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+      - "36622:36622"
+    volumes:
+      - ssh:/var/www/.ssh
+    healthcheck:
+        test: ["CMD", "echo", ">", "/dev/tcp/127.0.0.1/36622", "&&", "echo", ">", "/dev/tcp/127.0.0.1/80"]
+        interval: 5s
+        timeout: 3s
+        retries: 20
+
+  sftp-test:
+    image: php-apache-sftp
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      php-apache-sftp:
+        condition: service_healthy
+    entrypoint: /test.sh php-apache-sftp
+    working_dir: /
+    volumes:
+      - ./test/index.php:/index.php
+      - ./test/test.sh:/test.sh
+      - ssh:/var/www/.ssh
+
+volumes:
+  ssh:

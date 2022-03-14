@@ -1,6 +1,8 @@
 # https://github.com/docker-library/php/tree/master/8.1/bullseye/apache
 FROM php:8.1.1-apache-bullseye
 
+LABEL org.opencontainers.image.source https://github.com/Container-Driven-Development/php-apache-sftp
+
 ENTRYPOINT ["/usr/local/bin/tini", "--", "/docker-entrypoint.sh"]
 
 EXPOSE 36622/tcp
